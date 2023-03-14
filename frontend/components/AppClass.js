@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import axios from 'axios'
 import * as yup from 'yup'
 
@@ -6,9 +6,9 @@ import * as yup from 'yup'
 const formSchema = yup.object().shape({
   formValue: yup
     .string()
-    .email('invalid email')
-    .required('must enter email')
-    .notOneOf(['foo@bar.baz'], 'foo@bar.baz failure #71')
+    .email('Ouch: email must be a valid email')
+    .required('Ouch: email is required')
+    .notOneOf(['foo@bar.baz'],'foo@bar.baz failure #71')
 })
 
 // Suggested initial states
@@ -29,28 +29,24 @@ const initialState = {
 export default class AppClass extends React.Component {
   constructor(){
     super()
-    this.state = {
+    this.state= {
       x: initialX,
       y: initialY,
       steps: initialSteps,
       xy: initialIndex,
       message: initialMessage,
-      formValues:''
+      formValues: ''
     }
+    
   }
   // THE FOLLOWING HELPERS ARE JUST RECOMMENDATIONS.
   // You can delete them and build your own logic from scratch.
 
   getXY = () => {
-    return(`(${this.state.x}, ${this.state.y})`)
+    return(`(${this.state.x},${this.state.y})`)
+    
     // It it not necessary to have a state to track the coordinates.
     // It's enough to know what index the "B" is at, to be able to calculate them.
-  }
-
-  getXYMessage = () => {
-    // It it not necessary to have a state to track the "Coordinates (2, 2)" message for the user.
-    // You can use the `getXY` helper above to obtain the coordinates, and then `getXYMessage`
-    // returns the fully constructed string.
   }
 
   reset = () => {
@@ -60,35 +56,34 @@ export default class AppClass extends React.Component {
       steps: initialSteps,
       message: initialMessage,
       xy: initialIndex,
-      formValues:''
+      formValues: ''
     })
-    // Use this helper to reset all states to their initial values.
   }
 
   getNextIndex = (direction) => {
     if(direction === 'left'){
       if(this.state.x - 1 === 0){
-        return ({'x':this.state.x, 'y':this.state.y})
+        return ({"x": this.state.x, "y":this.state.y})
       }
-      return ({'x':this.state.x -1, 'y':this.state.y, 'xy':this.state.xy -1, 'steps': this.state.steps +1})
+      return ({"x": this.state.x - 1, "y":this.state.y,"xy":this.state.xy -1,"steps": this.state.steps + 1})
     }
     if(direction === 'right'){
-      if(this.state.x +1 === 4){
-        return ({'x': this.state.x, 'y':this.state.y})
+      if(this.state.x + 1 === 4){
+        return ({"x": this.state.x, "y":this.state.y})
       }
-      return ({'x': this.state.x +1, 'y': this.state.y, 'xy':this.state.xy +1, 'steps': this.state.steps +1})
+      return ({"x": this.state.x + 1, "y":this.state.y,"xy":this.state.xy + 1,"steps": this.state.steps + 1})
     }
     if(direction === 'up'){
-      if(this.state.y -1 === 0){
-        return ({'x': this.state.x, 'y': this.state.y})
+      if(this.state.y - 1 === 0){
+        return ({"x": this.state.x, "y":this.state.y})
       }
-      return ({'x': this.state.x, 'y':this.state.y -1, 'xy': this.state.xy -3, 'steps': this.state.steps +1})
+      return ({"x": this.state.x, "y":this.state.y - 1,"xy":this.state.xy - 3,"steps": this.state.steps + 1})
     }
     if(direction === 'down'){
-      if(this.state.y +1 === 4){
-        return ({'x': this.state.x, 'y':this.state.y})
+      if(this.state.y + 1 === 4){
+        return ({"x": this.state.x, "y":this.state.y})
       }
-      return({'x': this.state.x, 'y': this.state.y +1, 'xy':this.state.xy +3, 'steps': this.state.steps +1})
+      return ({"x": this.state.x, "y":this.state.y + 1,"xy":this.state.xy + 3,"steps": this.state.steps + 1})
     }
     // This helper takes a direction ("left", "up", etc) and calculates what the next index
     // of the "B" would be. If the move is impossible because we are at the edge of the grid,
@@ -97,18 +92,15 @@ export default class AppClass extends React.Component {
 
   move = (evt) => {
     let nextMove = this.getNextIndex(evt.target.id)
-
-    if(`(${nextMove.x}, ${nextMove.y})` === this.getXY()){
-      return this.setState({message: `You cant go ${evt.target.id}`})
+    if (`(${nextMove.x},${nextMove.y})` === this.getXY()){
+      return this.setState({message: `You can't go ${evt.target.id}`})
     }
-
     this.setState({...this.state,
       message: initialMessage,
       x: nextMove.x,
       y: nextMove.y,
       steps: nextMove.steps,
-      xy: nextMove.xy
-    })
+      xy: nextMove.xy})
     // This event handler can use the helper above to obtain a new index for the "B",
     // and change any states accordingly.
   }
@@ -117,32 +109,28 @@ export default class AppClass extends React.Component {
     this.setState({formValues: evt.target.value})
   }
 
-    validate = (name, value) => {
-        yup.reach(formSchema, name)
-        .validate(value)
-        .then(() => this.post())
-        .catch(err => this.setState({message:err.errors[0]}))
-    }
+  validate = (name,value) => {
+    yup.reach(formSchema, name)
+      .validate(value)
+      .then(() => this.post())
+      .catch(err => this.setState({message:err.errors[0]}))
+  }
 
-    post = () => {
-      const toSend = {
-        'x': this.state.x,
-        'y': this.state.y,
-        'steps': this.state.steps,
-        'email': this.state.formValues
-      }
-      
-      axios.post('http://localhost:9000/api/result', toSend)
-        .then(({data}) => {this.setState({message:data.message})})
-        .finally(this.setState({formValues:''}))
+  post = () => {
+    const toSend = {
+      "x": this.state.x,
+      "y": this.state.y,
+      "steps": this.state.steps,
+      "email": this.state.formValues
     }
-    // You will need this to update the value of the input.
-  
+    axios.post('http://localhost:9000/api/result', toSend)
+      .then(({data}) => {this.setState({message: data.message})})
+      .finally(this.setState({formValues: ''}))
+  }
 
   onSubmit = (evt) => {
     evt.preventDefault()
     this.validate('formValue', this.state.formValues)
-    // Use a POST request to send a payload to the server.
   }
 
   render() {
@@ -151,19 +139,19 @@ export default class AppClass extends React.Component {
       <div id="wrapper" className={className}>
         <div className="info">
           <h3 id="coordinates">{`Coordinates ${this.getXY()}`}</h3>
-          <h3 id="steps">{`You moved ${this.state.steps} ${this.state.steps === 1 ? 'time' : 'times'}`}</h3>
+          <h3 id="steps">{`You moved ${this.state.steps} ${this.state.steps === 1 ? 'time' : 'times'}`}</h3> {/*Stateful move tracker*/}
         </div>
         <div id="grid">
           {
             [0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => (
               <div key={idx} className={`square${idx === this.state.xy ? ' active' : ''}`}>
-                {idx === this.state.xy ? 'B' : null}
+                {idx === this.state.xy ? 'B' : null} 
               </div>
             ))
           }
         </div>
         <div className="info">
-          <h3 id="message">{this.state.message}</h3>
+          <h3 id="message">{this.state.message}</h3>{/*display message from API call*/}
         </div>
         <div id="keypad">
           <button id="left" onClick={(e) => this.move(e)}>LEFT</button>
@@ -173,7 +161,7 @@ export default class AppClass extends React.Component {
           <button id="reset" onClick={() => this.reset()}>reset</button>
         </div>
         <form onSubmit={(e) => this.onSubmit(e)}>
-          <input id="email" type="email" placeholder="type email" value={this.state.formValues} onChange={(e) => this.onChange(e)}></input>
+          <input id="email" type="text" placeholder="type email" value={this.state.formValues} onChange={(e) => this.onChange(e)}></input>
           <input id="submit" type="submit"></input>
         </form>
       </div>
